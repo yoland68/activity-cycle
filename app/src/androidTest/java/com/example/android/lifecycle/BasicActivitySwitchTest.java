@@ -17,43 +17,30 @@ import java.util.concurrent.ExecutionException;
  */
 
 
-public class ActivitySwitchTest extends ActivityInstrumentationTestCase2<ActivityA> {
-    private final String LOGTAG =
-            String.format("###Yoland: %s", ActivitySwitchTest.class.getSimpleName());
-    private static final int TIMEOUT_IN_MS = 10000;
-    private ActivityA mActivityA;
+public class BasicActivitySwitchTest <T extends Activity>
+        extends ActivityInstrumentationTestCase2<T> {
 
-    public ActivitySwitchTest() {
-        super(ActivityA.class);
+    private final int DEFAULT_TIMEOUT_IN_MS = 10000;
+    protected T mCurrentActivity;
+
+    public BasicActivitySwitchTest(Class x) {
+        super(x);
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mActivityA = getActivity();
+    public void testActivitySwitchHelper(int buttonId, Class endActivityClass) {
+        testActivitySwitchHelper(buttonId, endActivityClass, DEFAULT_TIMEOUT_IN_MS);
     }
 
-    public void testButtonNotNull() {
-        assertNotNull(mActivityA.findViewById(R.id.btn_finish_a));
-    }
-
-    private void testActivitySwitchHelper(int buttonId, Class endActivityClass) {
-        Log.d(LOGTAG, String.format("endActivityClass type is %s", endActivityClass));
-        Button mButton = (Button) mActivityA.findViewById(buttonId);
+    public void testActivitySwitchHelper(int buttonId, Class endActivityClass,int TIMEOUT_IN_MS) {
+        Button mButton = (Button) mCurrentActivity.findViewById(buttonId);
         Instrumentation.ActivityMonitor receiverActivityMonitor =
                 getInstrumentation().addMonitor(endActivityClass.getName(), null, false);
         TouchUtils.clickView(this, mButton);
         Activity mEndActivity = receiverActivityMonitor.waitForActivityWithTimeout(TIMEOUT_IN_MS);
-        Log.d(LOGTAG, "After timeout or end activity starts");
         assertNotNull("###The activity is null", mEndActivity);
         assertEquals("###Monitor for ReceiverActivity has not been called",
                 1, receiverActivityMonitor.getHits());
         assertEquals("Activity is wrong type", mEndActivity.getClass(), endActivityClass);
-        Log.d(LOGTAG, "*_* test passed");
         getInstrumentation().removeMonitor(receiverActivityMonitor);
-    }
-
-    public void testActivityAtoActivityB() {
-        testActivitySwitchHelper(R.id.btn_start_b, ActivityB.class);
     }
 }
